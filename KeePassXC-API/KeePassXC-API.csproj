@@ -1,8 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>KeePassXC_API</RootNamespace>
+    <Authors>TheHllm</Authors>
+    <Product>-</Product>
+    <Company>-</Company>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NaCl.Net" Version="0.1.13" />
+    <PackageReference Include="NativeMessaging.Client" Version="1.0.1" />
+  </ItemGroup>
 
 </Project>
