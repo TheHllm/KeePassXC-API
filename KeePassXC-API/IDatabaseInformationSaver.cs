@@ -16,8 +16,15 @@ namespace KeePassXC_API
 
         public async Task<DatabaseInformation[]> LoadAsync()
         {
-            using FileStream fs = new FileStream(Filename, FileMode.Open, FileAccess.Read);
-            return await JsonSerializer.DeserializeAsync<DatabaseInformation[]>(fs);
+            try
+            {
+                using FileStream fs = new FileStream(Filename, FileMode.Open, FileAccess.Read);
+                return await JsonSerializer.DeserializeAsync<DatabaseInformation[]>(fs);
+            }
+            catch (FileNotFoundException)
+            {
+                return new DatabaseInformation[0];
+            }
         }
 
         public async Task SaveAsync(DatabaseInformation[] info)

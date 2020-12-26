@@ -62,7 +62,7 @@ namespace KeePassXC_API
 					databases = await Saver.LoadAsync();
 					if (databases.Length == 0)
 					{
-						throw new Exception();
+						throw new KeePassXCException();
 					}
 
 					//Try test-associate -> if failed associate

@@ -7,6 +7,7 @@
     <Product>-</Product>
     <Company>-</Company>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/TheHllm/KeePassXC-API</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
