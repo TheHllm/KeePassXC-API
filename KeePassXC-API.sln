@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30804.86
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KeePassXC-API", "KeePassXC-API\KeePassXC-API.csproj", "{B77E9B9D-A3EB-43D2-8473-F7A8F6CE9A80}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KeePassXC-API", "KeePassXC-API\KeePassXC-API.csproj", "{B77E9B9D-A3EB-43D2-8473-F7A8F6CE9A80}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{463CD824-67A4-42EE-9853-9FEF0AEA1C1C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "Tests\Tests.csproj", "{463CD824-67A4-42EE-9853-9FEF0AEA1C1C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example", "Example\Example.csproj", "{72B77C99-7577-4242-926C-4F59F5CFF1BF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{463CD824-67A4-42EE-9853-9FEF0AEA1C1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{463CD824-67A4-42EE-9853-9FEF0AEA1C1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{463CD824-67A4-42EE-9853-9FEF0AEA1C1C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{72B77C99-7577-4242-926C-4F59F5CFF1BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{72B77C99-7577-4242-926C-4F59F5CFF1BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{72B77C99-7577-4242-926C-4F59F5CFF1BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{72B77C99-7577-4242-926C-4F59F5CFF1BF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
