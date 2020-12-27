@@ -24,7 +24,6 @@ namespace Tests
         public async Task TestGetLogins()
         {
             var login = await api.GetLogins("https://example.com");
-            Assert.IsTrue(login.Length > 0);
         }
 
         [Test]

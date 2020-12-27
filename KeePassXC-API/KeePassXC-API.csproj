@@ -8,11 +8,12 @@
     <Company>-</Company>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/TheHllm/KeePassXC-API</RepositoryUrl>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="NaCl.Net" Version="0.1.13" />
-    <PackageReference Include="NativeMessaging.Client" Version="1.0.1" />
+    <PackageReference Include="NativeMessaging.Client" Version="1.0.2" />
   </ItemGroup>
 
 </Project>
