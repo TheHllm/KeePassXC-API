@@ -22,7 +22,8 @@ namespace KeePassXC_API
             { 12, new KXCIncorrectActionException()},
             { 13, new KXCEmptyMessageException()},
             { 14, new KeePassXCException()},
-            { 15, new KXCNoLoginFoundException()}
+            { 15, new KXCNoLoginFoundException()},
+            { 16, new KXCTimeoutException() }
         };
     }
 
@@ -40,4 +41,5 @@ namespace KeePassXC_API
     public class KXCEmptyMessageException : KeePassXCException { }
     public class KXCNoLoginFoundException : KeePassXCException { }
     public class KXCWrongMessageException : KeePassXCException { }
+    public class KXCTimeoutException : KeePassXCException { }
 }

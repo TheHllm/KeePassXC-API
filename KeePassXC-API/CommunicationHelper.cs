@@ -26,15 +26,23 @@ namespace KeePassXC_API
 
         public CommunicationHelper()
         {
-            //Generate Crypto stuff
-            using RandomNumberGenerator rng = RandomNumberGenerator.Create();
-            clientId = rng.GetBytes(24).ToBase64();
-            nonce = new BigInteger(rng.GetBytes(24));
-            //generate public and private key
-            Curve25519XSalsa20Poly1305.KeyPair(clientPrivateKey, clientPublicKey);
+            try
+            {
+                //Generate Crypto stuff
+                using RandomNumberGenerator rng = RandomNumberGenerator.Create();
+                clientId = rng.GetBytes(24).ToBase64();
+                nonce = new BigInteger(rng.GetBytes(24));
+                //generate public and private key
+                Curve25519XSalsa20Poly1305.KeyPair(clientPrivateKey, clientPublicKey);
 
-            //start the key exchange
-            ExchangeKeys().Wait();
+                //start the key exchange
+                ExchangeKeys().Wait();
+            }
+            catch
+            {
+                ((IDisposable)this).Dispose();
+                throw;
+            }
         }
 
         class ExchangeKeysMessage : Message
@@ -63,7 +71,7 @@ namespace KeePassXC_API
         {
             connection = await Client.GetByName("org.keepassxc.keepassxc_browser");
             await SendMessage(new ExchangeKeysMessage(clientId, clientPublicKey));
-            KeyExchangeResponseMessage kexmsg = await ReadMessage<KeyExchangeResponseMessage>(Actions.ExchangePublicKeys);
+            KeyExchangeResponseMessage kexmsg = await ReadMessage<KeyExchangeResponseMessage>(Actions.ExchangePublicKeys, TimeSpan.FromSeconds(5));
             cryptoBox = new Curve25519XSalsa20Poly1305(clientPrivateKey, kexmsg.PublicKey);
         }
 
@@ -151,9 +159,21 @@ namespace KeePassXC_API
         /// <summary>
         /// Waits for a message and checks it for errors and given type.
         /// </summary>
-        public async Task<T> ReadMessage<T>(Actions type) where T : ResponseMessage
+        public async Task<T> ReadMessage<T>(Actions type, TimeSpan? timeOut = null) where T : ResponseMessage
         {
-            T msg = await connection.ReadMessage<T>();
+            T msg;
+            if (timeOut != null)
+            {
+                var readTask = connection.ReadMessage<T>();
+                if (!readTask.Wait(timeOut.Value))
+                    throw new KXCTimeoutException();
+                msg = readTask.Result;
+            }
+            else
+            {
+                msg = await connection.ReadMessage<T>();
+            }
+            
             if (msg.IsError)
             {
                 throw KeePassXCException.Exceptions[msg.ErrorCode];
@@ -181,8 +201,8 @@ namespace KeePassXC_API
 
         void IDisposable.Dispose()
         {
-            cryptoBox.Dispose();
-            ((IDisposable)connection).Dispose();
+            cryptoBox?.Dispose();
+            ((IDisposable)connection)?.Dispose();
         }
     }
 

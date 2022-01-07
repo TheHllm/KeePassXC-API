@@ -20,8 +20,16 @@ namespace KeePassXC_API
 
 		public KeepassXCApi(IDatabaseInformationSaver saver)
         {
-			Saver = saver;
-			communicatior = new();
+			try
+			{
+				Saver = saver;
+				communicatior = new();
+			}
+			catch
+            {
+				((IDisposable)this).Dispose();
+				throw;
+            }
 		}
 
 
@@ -159,7 +167,7 @@ namespace KeePassXC_API
 
         void IDisposable.Dispose()
         {
-            ((IDisposable)communicatior).Dispose();
+            ((IDisposable)communicatior)?.Dispose();
         }
     }
 }
