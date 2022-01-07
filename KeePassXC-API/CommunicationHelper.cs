@@ -114,10 +114,10 @@ namespace KeePassXC_API
             [JsonPropertyName("message")]
             public string Message { get; set; }
         }
-        public async Task<T> ReadEncrypted<T>(Actions actionType) where T : ResponseMessage
+        public async Task<T> ReadEncrypted<T>(Actions actionType, bool waitForUnlock = false) where T : ResponseMessage
         {
             //read outer message
-            EncryptedResponse enc = await ReadMessage<EncryptedResponse>(actionType);
+            EncryptedResponse enc = await ReadMessage<EncryptedResponse>(actionType, waitForUnlook: waitForUnlock);
             //decrypt the 'message' field
             byte[] msg = enc.Message.FromBase64();
             byte[] plain = new byte[msg.Length - Curve25519XSalsa20Poly1305.TagLength];
@@ -137,6 +137,9 @@ namespace KeePassXC_API
         {
             [JsonPropertyName("message")]
             public string Message { get; set; }
+
+            [JsonPropertyName("triggerUnlock")]
+            public string TriggerUnlock { get; set; }
             public EncryptedMessage(T inner, Curve25519XSalsa20Poly1305 box, byte[] nonce) : base()
             {
                 this.ClientId = inner.ClientId;
@@ -150,41 +153,45 @@ namespace KeePassXC_API
                 this.Message = msgE.ToBase64();
             }
         }
-        public async Task SendEncrypted<T>(T msg) where T : Message
+        public async Task SendEncrypted<T>(T msg, bool triggerUnlock = false) where T : Message
         {
-            await SendMessage(new EncryptedMessage<T>(msg, cryptoBox, nonce.ToByteArray()));
+            await SendMessage(new EncryptedMessage<T>(msg, cryptoBox, nonce.ToByteArray()) { TriggerUnlock = triggerUnlock ? "true" : null  });
         }
 
 
         /// <summary>
         /// Waits for a message and checks it for errors and given type.
         /// </summary>
-        public async Task<T> ReadMessage<T>(Actions type, TimeSpan? timeOut = null) where T : ResponseMessage
+        public async Task<T> ReadMessage<T>(Actions? type, TimeSpan? timeOut = null, bool waitForUnlook = false) where T : ResponseMessage
         {
-            T msg;
-            if (timeOut != null)
+            while (true)
             {
-                var readTask = connection.ReadMessage<T>();
-                if (!readTask.Wait(timeOut.Value))
-                    throw new KXCTimeoutException();
-                msg = readTask.Result;
-            }
-            else
-            {
-                msg = await connection.ReadMessage<T>();
-            }
-            
-            if (msg.IsError)
-            {
-                throw KeePassXCException.Exceptions[msg.ErrorCode];
-            }
-            else if (msg.Action != type)
-            {
-                throw new KXCWrongMessageException();
-            }
-            else
-            {
-                return msg;
+                T msg;
+                if (timeOut != null)
+                {
+                    var readTask = connection.ReadMessage<T>();
+                    if (!readTask.Wait(timeOut.Value))
+                        throw new KXCTimeoutException();
+                    msg = readTask.Result;
+                }
+                else
+                {
+                    msg = await connection.ReadMessage<T>();
+                }
+                if (msg.IsError)
+                {
+                    if (msg.ErrorCode == 1 && waitForUnlook)
+                        continue;
+                    throw KeePassXCException.Exceptions[msg.ErrorCode];
+                }
+                else if (type != null && msg.Action != type)
+                {
+                    throw new KXCWrongMessageException();
+                }
+                else
+                {
+                    return msg;
+                }
             }
         }
 

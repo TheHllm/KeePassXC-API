@@ -157,6 +157,15 @@ namespace KeePassXC_API
 			ResponseMessage msg = await communicatior.ReadMessage<ResponseMessage>(Actions.DatabaseLocked);
 		}
 
+		public async Task UnlockDatabase()
+		{
+			using IDisposable l = await communicationLock.LockAsync();
+			await communicatior.SendEncrypted(new BasicMessage(Actions.GetDatabaseHash), true);
+			ResponseMessage msg = await communicatior.ReadMessage<ResponseMessage>(null, waitForUnlook: true);
+			if (msg.Action != Actions.DatabaseUnlocked && msg.Action != Actions.GetDatabaseHash)
+				throw new KXCWrongMessageException();
+		}
+
 		private class HashMessage : ResponseMessage {[JsonPropertyName("hash")] public string Hash { get; set; } }
 		public async Task<string> GetDatabaseHash()
 		{

@@ -23,7 +23,6 @@ namespace KeePassXC_API
             { 13, new KXCEmptyMessageException()},
             { 14, new KeePassXCException()},
             { 15, new KXCNoLoginFoundException()},
-            { 16, new KXCTimeoutException() }
         };
     }
 
