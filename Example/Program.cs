@@ -21,7 +21,6 @@ namespace Example
              
                 KeepassXCApi api = new();
                 await api.AssociateIfNeeded();
-                await api.UnlockDatabase();
 
                 switch (args[0])
                 {

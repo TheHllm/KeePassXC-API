@@ -60,7 +60,7 @@ namespace KeePassXC_API
 		/// <summary>
 		/// You don't need to call this, if it is needed it will be called automatically.
 		/// </summary>
-		public async Task AssociateIfNeeded()
+		public async Task AssociateIfNeeded(bool tryUnlockIfClosed=true)
         {
 			if (!Associated)
 			{
@@ -77,8 +77,24 @@ namespace KeePassXC_API
 					using IDisposable ll = await communicationLock.LockAsync();
 					foreach (DatabaseInformation db in databases)
 					{
-						await communicatior.SendEncrypted(new TestAssocicateMessage(db.ClientIdentificationKey, db.ClientName));
-						TestAssocicateResponseMessage res = await communicatior.ReadEncrypted<TestAssocicateResponseMessage>(Actions.TestAssociate);
+						await communicatior.SendEncrypted(new TestAssocicateMessage(db.ClientIdentificationKey, db.ClientName)); 
+						try
+						{
+							TestAssocicateResponseMessage res = await communicatior.ReadEncrypted<TestAssocicateResponseMessage>(Actions.TestAssociate);
+                        }
+                        catch (KXCDatabaseNotOpenException)
+                        {
+                            if (tryUnlockIfClosed)
+                            {
+								await this.UnlockDatabase();
+								await communicatior.SendEncrypted(new TestAssocicateMessage(db.ClientIdentificationKey, db.ClientName));
+								TestAssocicateResponseMessage res = await communicatior.ReadEncrypted<TestAssocicateResponseMessage>(Actions.TestAssociate);
+							}
+                            else
+                            {
+								throw;
+                            }
+                        }
 					}
 
 					Associated = true;
