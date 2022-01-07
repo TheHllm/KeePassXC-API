@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Show Logins": {
+      "commandName": "Project",
+      "commandLineArgs": "-logins api://ApiTest"
+    }
+  }
+}
