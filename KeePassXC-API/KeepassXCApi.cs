@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace KeePassXC_API
 {
-    public class KeepassXCApi : IDisposable
+	public class KeepassXCApi : IDisposable
 	{
 		private AsyncLock communicationLock { get; } = new();
 		private CommunicationHelper communicatior { get; init; }
@@ -16,20 +16,20 @@ namespace KeePassXC_API
 
 		private bool Associated { get; set; } = false;
 
-		public KeepassXCApi() : this(new DefaultDatabaseInformationSaver()) {}
+		public KeepassXCApi() : this(new DefaultDatabaseInformationSaver()) { }
 
 		public KeepassXCApi(IDatabaseInformationSaver saver)
-        {
+		{
 			try
 			{
 				Saver = saver;
 				communicatior = new();
 			}
 			catch
-            {
+			{
 				((IDisposable)this).Dispose();
 				throw;
-            }
+			}
 		}
 
 
@@ -60,8 +60,8 @@ namespace KeePassXC_API
 		/// <summary>
 		/// You don't need to call this, if it is needed it will be called automatically.
 		/// </summary>
-		public async Task AssociateIfNeeded(bool tryUnlockIfClosed=true)
-        {
+		public async Task AssociateIfNeeded(bool tryUnlockIfClosed = true)
+		{
 			if (!Associated)
 			{
 				//Try to load -> if failed associate
@@ -77,24 +77,33 @@ namespace KeePassXC_API
 					using IDisposable ll = await communicationLock.LockAsync();
 					foreach (DatabaseInformation db in databases)
 					{
-						await communicatior.SendEncrypted(new TestAssocicateMessage(db.ClientIdentificationKey, db.ClientName)); 
+						await communicatior.SendEncrypted(new TestAssocicateMessage(db.ClientIdentificationKey, db.ClientName));
 						try
 						{
 							TestAssocicateResponseMessage res = await communicatior.ReadEncrypted<TestAssocicateResponseMessage>(Actions.TestAssociate);
-                        }
-                        catch (KXCDatabaseNotOpenException)
-                        {
-                            if (tryUnlockIfClosed)
-                            {
+						}
+						catch (KXCDatabaseNotOpenException)
+						{
+							if (tryUnlockIfClosed)
+							{
 								await this.UnlockDatabase();
 								await communicatior.SendEncrypted(new TestAssocicateMessage(db.ClientIdentificationKey, db.ClientName));
-								TestAssocicateResponseMessage res = await communicatior.ReadEncrypted<TestAssocicateResponseMessage>(Actions.TestAssociate);
+								// Read old message out of queue
+								try
+								{
+									await communicatior.ReadMessage<AssociateResponse>(Actions.TestAssociate);
+								}
+								catch
+								{
+									// Ignore
+								}
+								TestAssocicateResponseMessage res = await communicatior.ReadMessage<TestAssocicateResponseMessage>(Actions.TestAssociate);
 							}
-                            else
-                            {
+							else
+							{
 								throw;
-                            }
-                        }
+							}
+						}
 					}
 
 					Associated = true;
@@ -104,47 +113,75 @@ namespace KeePassXC_API
 
 				//associate
 				using IDisposable l = await communicationLock.LockAsync();
-				string clientIdentificationKey = await communicatior.SendAssociateMessage();
-				AssociateResponse resp = await communicatior.ReadEncrypted<AssociateResponse>(Actions.Associate);
-				databases = new DatabaseInformation[] { new DatabaseInformation(clientIdentificationKey, resp.Id) };
+				string clientIdentificationKey;
+				AssociateResponse resp;
+				try
+				{
+					clientIdentificationKey = await communicatior.SendAssociateMessage();
+					resp = await communicatior.ReadEncrypted<AssociateResponse>(Actions.Associate);
+				}
+				catch (KXCDatabaseNotOpenException)
+				{
+					if (tryUnlockIfClosed)
+					{
+						await this.UnlockDatabase();
+						// Read old message out of queue
+						try
+						{
+							await communicatior.ReadMessage<AssociateResponse>(Actions.TestAssociate);
+						}
+						catch
+						{
+							// Ignore
+						}
 
+						clientIdentificationKey = await communicatior.SendAssociateMessage();
+						resp = await communicatior.ReadEncrypted<AssociateResponse>(Actions.Associate);
+
+					}
+					else
+					{
+						throw;
+					}
+				}
+				databases = new DatabaseInformation[] { new DatabaseInformation(clientIdentificationKey, resp.Id) };
 				await Saver.SaveAsync(databases);
 				Associated = true;
 			}
 		}
 
 		private class GetLoginMessage : Message
-        {
+		{
 			[JsonPropertyName("url")]
 			public string Url { get; set; }
 
 			[JsonPropertyName("keys")]
 			public DatabaseInformation[] Databases { get; set; }
-			
+
 			public GetLoginMessage()
-            {
+			{
 				Action = Actions.GetLogins;
-            }
+			}
 		}
 		private class GetLoginsResponse : ResponseMessage
-        {
+		{
 			[JsonPropertyName("entries")]
 			public AccountInformation[] Logins { get; set; }
-        }
+		}
 		public async Task<AccountInformation[]> GetLogins(string url)
-        {
+		{
 			await AssociateIfNeeded();
-            GetLoginMessage msg = new GetLoginMessage()
+			GetLoginMessage msg = new GetLoginMessage()
 			{
 				Databases = databases,
 				Url = url
-				
+
 			};
 			using IDisposable l = await communicationLock.LockAsync();
 			await communicatior.SendEncrypted(msg);
-            GetLoginsResponse resp = await communicatior.ReadEncrypted<GetLoginsResponse>(Actions.GetLogins);
+			GetLoginsResponse resp = await communicatior.ReadEncrypted<GetLoginsResponse>(Actions.GetLogins);
 			return resp.Logins;
-        }
+		}
 
 		class GeneratePasswordResponse : ResponseMessage
 		{
@@ -177,9 +214,14 @@ namespace KeePassXC_API
 		{
 			using IDisposable l = await communicationLock.LockAsync();
 			await communicatior.SendEncrypted(new BasicMessage(Actions.GetDatabaseHash), true);
-			ResponseMessage msg = await communicatior.ReadMessage<ResponseMessage>(null, waitForUnlook: true);
-			if (msg.Action != Actions.DatabaseUnlocked && msg.Action != Actions.GetDatabaseHash)
-				throw new KXCWrongMessageException();
+			while (true)
+			{
+				ResponseMessage msg = await communicatior.ReadMessage<ResponseMessage>(null, waitForUnlook: true);
+				if (msg.Action != Actions.DatabaseUnlocked && msg.Action != Actions.GetDatabaseHash)
+					throw new KXCWrongMessageException();
+				if (msg.Action == Actions.GetDatabaseHash)
+					break;
+			}
 		}
 
 		private class HashMessage : ResponseMessage {[JsonPropertyName("hash")] public string Hash { get; set; } }
@@ -190,9 +232,9 @@ namespace KeePassXC_API
 			return (await communicatior.ReadEncrypted<HashMessage>(Actions.GetDatabaseHash)).Hash;
 		}
 
-        void IDisposable.Dispose()
-        {
-            ((IDisposable)communicatior)?.Dispose();
-        }
-    }
+		void IDisposable.Dispose()
+		{
+			((IDisposable)communicatior)?.Dispose();
+		}
+	}
 }
