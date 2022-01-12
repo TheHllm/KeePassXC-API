@@ -38,6 +38,11 @@ namespace KeePassXC_API
                 //start the key exchange
                 ExchangeKeys().Wait();
             }
+            catch (AggregateException e)
+            {
+                ((IDisposable)this).Dispose();
+                throw e.InnerException;
+            }
             catch
             {
                 ((IDisposable)this).Dispose();
