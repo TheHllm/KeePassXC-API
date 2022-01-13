@@ -60,7 +60,7 @@ namespace KeePassXC_API
 		/// <summary>
 		/// You don't need to call this, if it is needed it will be called automatically.
 		/// </summary>
-		public async Task AssociateIfNeeded(bool tryUnlockIfClosed = true)
+		public async Task AssociateIfNeeded(bool tryUnlockIfClosed = true, TimeSpan? timeOutForUnlock = null)
 		{
 			if (!Associated)
 			{
@@ -87,7 +87,7 @@ namespace KeePassXC_API
 							{
 								if (tryUnlockIfClosed)
 								{
-									await this.UnlockDatabase();
+									await this.UnlockDatabase(timeOutForUnlock);
 									await communicatior.SendEncrypted(new TestAssocicateMessage(db.ClientIdentificationKey, db.ClientName));
 									// Read old message out of queue
 									try
@@ -113,6 +113,10 @@ namespace KeePassXC_API
 					}
 					return;
 				}
+				catch (KXCTimeoutException)
+                {
+					throw;
+                }
 				catch (KeePassXCException) { }
 
 				//associate
@@ -129,7 +133,7 @@ namespace KeePassXC_API
 					{
 						if (tryUnlockIfClosed)
 						{
-							await this.UnlockDatabase();
+							await this.UnlockDatabase(timeOutForUnlock);
 							// Read old message out of queue
 							try
 							{
@@ -222,14 +226,14 @@ namespace KeePassXC_API
 			}
 		}
 
-		public async Task UnlockDatabase()
+		public async Task UnlockDatabase(TimeSpan? timeOut = null)
 		{
 			using (await communicationLock.LockAsync())
 			{
 				while (true)
 				{
 					await communicatior.SendEncrypted(new BasicMessage(Actions.GetDatabaseHash), true);
-					ResponseMessage msg = await communicatior.ReadMessage<ResponseMessage>(null, waitForUnlook: true);
+					ResponseMessage msg = await communicatior.ReadMessage<ResponseMessage>(null, timeOut, waitForUnlook: true);
 					if (msg.Action != Actions.DatabaseUnlocked && msg.Action != Actions.DatabaseLocked && msg.Action != Actions.GetDatabaseHash)
 						throw new KXCWrongMessageException();
 					if (msg.Action == Actions.GetDatabaseHash)
