@@ -5,7 +5,7 @@ namespace KeePassXC_API
 {
     public class KeePassXCException : Exception
     {
-        public static Dictionary<int, KeePassXCException> Exceptions = new()
+        public static Dictionary<int, KeePassXCException> Exceptions = new Dictionary<int, KeePassXCException>()
         {
             { 0 , new KXCUnknowException() },
             { 1 , new KXCDatabaseNotOpenException() },

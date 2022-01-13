@@ -6,8 +6,8 @@ namespace KeePassXC_API
 {
     public interface IDatabaseInformationSaver
     {
-        public Task<DatabaseInformation[]> LoadAsync();
-        public Task SaveAsync(DatabaseInformation[] info);
+        Task<DatabaseInformation[]> LoadAsync();
+        Task SaveAsync(DatabaseInformation[] info);
     }
 
     public class DefaultDatabaseInformationSaver : IDatabaseInformationSaver
@@ -18,8 +18,14 @@ namespace KeePassXC_API
         {
             try
             {
-                using FileStream fs = new FileStream(Filename, FileMode.Open, FileAccess.Read);
-                return await JsonSerializer.DeserializeAsync<DatabaseInformation[]>(fs);
+                using (FileStream fs = new FileStream(Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, Filename), FileMode.Open, FileAccess.Read))
+                {
+                    return await JsonSerializer.DeserializeAsync<DatabaseInformation[]>(fs);
+                }
+            }
+            catch (JsonException)
+            {
+                return new DatabaseInformation[0];
             }
             catch (FileNotFoundException)
             {
@@ -29,8 +35,10 @@ namespace KeePassXC_API
 
         public async Task SaveAsync(DatabaseInformation[] info)
         {
-            using FileStream fs = new FileStream(Filename, FileMode.OpenOrCreate, FileAccess.Write);
-            await JsonSerializer.SerializeAsync(fs, info);
+            using (FileStream fs = new FileStream(Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, Filename), FileMode.Create, FileAccess.Write))
+            {
+                await JsonSerializer.SerializeAsync(fs, info);
+            }
         }
     }
 }

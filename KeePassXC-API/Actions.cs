@@ -9,20 +9,20 @@ namespace KeePassXC_API
     {
         public string Type { get; private set; }
 
-        public static readonly Actions SetLogin = new("set-login");
-        public static readonly Actions GetLogins = new("get-logins");
-        public static readonly Actions GeneratePassword = new("generate-password");
-        public static readonly Actions Associate = new("associate");
-        public static readonly Actions TestAssociate = new("test-associate");
-        public static readonly Actions GetDatabaseHash = new("get-databasehash");
-        public static readonly Actions ExchangePublicKeys = new("change-public-keys");
-        public static readonly Actions LockDatabase = new("lock-database");
-        public static readonly Actions DatabaseLocked = new("database-locked");
-        public static readonly Actions DatabaseUnlocked = new("database-unlocked");
-        public static readonly Actions GetDatabaseGroups = new("get-database-groups");
-        public static readonly Actions CreateNewGroup = new("create-new-group");
-        public static readonly Actions GetTOTP = new("get-totp");
-        public static readonly Actions LoadKeyring = new("load_keyring");
+        public static readonly Actions SetLogin = new Actions("set-login");
+        public static readonly Actions GetLogins = new Actions("get-logins");
+        public static readonly Actions GeneratePassword = new Actions("generate-password");
+        public static readonly Actions Associate = new Actions("associate");
+        public static readonly Actions TestAssociate = new Actions("test-associate");
+        public static readonly Actions GetDatabaseHash = new Actions("get-databasehash");
+        public static readonly Actions ExchangePublicKeys = new Actions("change-public-keys");
+        public static readonly Actions LockDatabase = new Actions("lock-database");
+        public static readonly Actions DatabaseLocked = new Actions("database-locked");
+        public static readonly Actions DatabaseUnlocked = new Actions("database-unlocked");
+        public static readonly Actions GetDatabaseGroups = new Actions("get-database-groups");
+        public static readonly Actions CreateNewGroup = new Actions("create-new-group");
+        public static readonly Actions GetTOTP = new Actions("get-totp");
+        public static readonly Actions LoadKeyring = new Actions("load_keyring");
 
         private Actions(string type)
         {

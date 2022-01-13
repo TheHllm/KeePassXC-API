@@ -16,7 +16,7 @@ namespace KeePassXC_API
         /// <summary>
         /// clientID field send with every message, is unique to each session
         /// </summary>
-        private string clientId { get; init; }
+        private string clientId { get; }
         private byte[] clientPublicKey { get; } = new byte[32];
         private byte[] clientPrivateKey { get; } = new byte[32];
         private BigInteger nonce { get; set; }
@@ -29,14 +29,16 @@ namespace KeePassXC_API
             try
             {
                 //Generate Crypto stuff
-                using RandomNumberGenerator rng = RandomNumberGenerator.Create();
-                clientId = rng.GetBytes(24).ToBase64();
-                nonce = new BigInteger(rng.GetBytes(24));
-                //generate public and private key
-                Curve25519XSalsa20Poly1305.KeyPair(clientPrivateKey, clientPublicKey);
+                using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+                {
+                    clientId = rng.GetBytes(24).ToBase64();
+                    nonce = new BigInteger(rng.GetBytes(24));
+                    //generate public and private key
+                    Curve25519XSalsa20Poly1305.KeyPair(clientPrivateKey, clientPublicKey);
 
-                //start the key exchange
-                ExchangeKeys().Wait();
+                    //start the key exchange
+                    ExchangeKeys().Wait();
+                }
             }
             catch (AggregateException e)
             {
@@ -167,7 +169,7 @@ namespace KeePassXC_API
         /// <summary>
         /// Waits for a message and checks it for errors and given type.
         /// </summary>
-        public async Task<T> ReadMessage<T>(Actions? type, TimeSpan? timeOut = null, bool waitForUnlook = false) where T : ResponseMessage
+        public async Task<T> ReadMessage<T>(Actions type, TimeSpan? timeOut = null, bool waitForUnlook = false) where T : ResponseMessage
         {
             while (true)
             {
