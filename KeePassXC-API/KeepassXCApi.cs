@@ -230,7 +230,7 @@ namespace KeePassXC_API
 				{
 					await communicatior.SendEncrypted(new BasicMessage(Actions.GetDatabaseHash), true);
 					ResponseMessage msg = await communicatior.ReadMessage<ResponseMessage>(null, waitForUnlook: true);
-					if (msg.Action != Actions.DatabaseUnlocked && msg.Action != Actions.GetDatabaseHash)
+					if (msg.Action != Actions.DatabaseUnlocked && msg.Action != Actions.DatabaseLocked && msg.Action != Actions.GetDatabaseHash)
 						throw new KXCWrongMessageException();
 					if (msg.Action == Actions.GetDatabaseHash)
 						break;
