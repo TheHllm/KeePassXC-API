@@ -6,23 +6,28 @@ namespace KeePassXC_API.Messages
     class ResponseMessage : Message
 	{
 		[JsonIgnore]
-		public const int SupportedVersion = 262;
+		public static readonly Version SupportedVersion = new Version(2, 6, 2);
 
 		[JsonPropertyName("version")]
 		public string Version 
 		{ 
 			get { return _version; } 
-			set { 
-				if (SupportedVersion > int.Parse(value.Replace(".",""))) 
-				{ 
-					throw new InvalidCastException("wrong version"); 
-				} 
-				_version = value; 
+			set {
+				_version = value;
+				VersionNumber = new Version(value.Split('-')[0]);
+				if (SupportedVersion > VersionNumber)
+				{
+					throw new InvalidCastException("wrong version");
+				}
 			} 
 		}
-
 		[JsonIgnore]
 		private string _version;
+
+		[JsonIgnore]
+		public Version VersionNumber { get; private set; }
+
+
 
 		[JsonPropertyName("error")]
 		public string Error { get; set; } = null;
